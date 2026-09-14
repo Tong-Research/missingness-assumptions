@@ -152,9 +152,23 @@ def t_graphscale():
                 ps=sorted(d.p.unique()))
 
 
+def t_corrtrace():
+    """CORRTRACE (../paper-plco-hypergraph/prereg/CORRTRACE.md): the median absolute correlation
+    between an indicator and a value, pooled over hospitals and computed inside each hospital.
+    Replicated, because one draw of this quantity is noisy enough to mislead: across replicates the
+    pooled figure at a fixed regime spans more than a factor of two."""
+    fs = sorted(glob.glob(str(SRC / "results/corrtrace/*.csv")))
+    if not fs: return None
+    d = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
+    med = d.groupby(["scope", "gamma"]).median_abs_corr.median()
+    return dict(nrep=int(d.rep.nunique()),
+                pooled={g: float(med[("pooled", g)]) for g in (0.0, 1.0, 2.0)},
+                within=float(med[("within_hospital", 0.0)]))
+
+
 def counts():
     dv, npan, site = t_audit(); gap, w = t_negative(); g = t_detection()
-    sg = t_smgrid(); gs = t_graphscale()
+    sg = t_smgrid(); gs = t_graphscale(); ct = t_corrtrace()
     n = len(dv); mix = int((dv.lca20 >= 0.95 * dv.panels_tree).sum()); k10 = int((dv.K <= 10).sum())
     pair = int((dv.panels_l1 >= 0.98 * dv.panels_tree).sum()); hi = dv.panels_tree.max()
     with open(OUT / "counts.tex", "w") as f:
@@ -182,7 +196,11 @@ def counts():
                      ("GsWorst", f"{gs['worst']:.1f}"), ("GsReps", gs["nrep"]),
                      ("GsPmax", int(max(gs["ps"]))),
                      ("GsHardLo", f"{gs['hard'].loc[(20, 1.5)]:.1f}"), ("GsHardHi", f"{gs['hard'].loc[(20, 2.5)]:.1f}"),
-                     ("GsHardTwelve", f"{gs['hard'].loc[(12, 1.5)]:.1f}"), ("GsHardThirty", f"{gs['hard'].loc[(30, 1.5)]:.1f}")]):
+                     ("GsHardTwelve", f"{gs['hard'].loc[(12, 1.5)]:.1f}"), ("GsHardThirty", f"{gs['hard'].loc[(30, 1.5)]:.1f}")]) + ([] if ct is None else [
+                     # CORRTRACE: the marginal indicator-value association the regime induces
+                     ("CtReps", ct["nrep"]), ("CtPoolZero", f"{ct['pooled'][0.0]:.3f}"),
+                     ("CtPoolOne", f"{ct['pooled'][1.0]:.3f}"), ("CtPoolTwo", f"{ct['pooled'][2.0]:.3f}"),
+                     ("CtWithin", f"{ct['within']:.3f}")]):
             f.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
     f_dissociation()
     print(f"audit.tex, negative.tex, detection.tex, counts.tex written")
