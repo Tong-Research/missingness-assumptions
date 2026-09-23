@@ -85,8 +85,8 @@ def f_dissociation():
          r"  tick label style={font=\small}, legend style={font=\scriptsize, draw=none, fill=none,",
          r"  at={(0.5,-0.38)}, anchor=north, legend columns=1}, axis lines=left,",
          r"  error bars/y dir=both, error bars/y explicit]"]
-    for al, opt, lab in [("aligned", r"mark=*, thick, color=red!65!black", "aligned to the hospital"),
-                         ("closed", r"mark=square*, thick, dashed, color=blue!60!black", "closed-missingness control")]:
+    for al, opt, lab in [("aligned", r"mark=*, thick, color=black, mark options={solid}", "aligned to the hospital"),
+                         ("closed", r"mark=square*, thick, dashed, color=black!45, mark options={solid}", "closed-missingness control")]:
         r = g.xs(al, level="alignment").sort_index()
         L.append(r"\addplot[" + opt + r"] coordinates {" +
                  pts([(x, v["mean"], v["sem"]) for x, v in r.iterrows()], True) + r"};")
@@ -95,8 +95,11 @@ def f_dissociation():
 
     ARMS = [("td_pc", "PC, test-wise deletion"), ("mvpc", "MVPC"), ("fci", "FCI"),
             ("cdnod_true", "CD-NOD, true regime"), ("cdnod_est", "CD-NOD, estimated regime")]
-    MARK = ["mark=*, color=black", "mark=square*, color=red!70!black", "mark=triangle*, color=blue!65!black",
-            "mark=diamond*, color=teal!75!black", "mark=pentagon*, color=violet!70!black"]
+    # Greyscale through the shared palette: series told apart by dash pattern and marker, not colour.
+    MARK = ["mark=*, color=black", "mark=square*, dashed, color=black!66, mark options={solid}",
+            "mark=triangle*, dotted, color=black!38, mark options={solid}",
+            "mark=diamond*, dashdotted, color=black!52, mark options={solid}",
+            "mark=pentagon*, densely dashed, color=black!28, mark options={solid}"]
     L += [r"\begin{axis}[name=B, at={($(A.east)+(2.6cm,0)$)}, anchor=west, width=0.40\textwidth,",
           r"  height=4.6cm, xlabel={regime strength $\gamma$},",
           r"  ylabel={excess error, aligned $-$ control}, xtick={0,1,2}, xmin=-0.15, xmax=2.15,",
